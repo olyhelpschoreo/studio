@@ -87,7 +87,7 @@
 
   .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:12px;}
   .brand{display:flex;align-items:center;gap:10px;}
-  .brand-mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--math),var(--sci));flex-shrink:0;}
+  .brand-mark{width:30px;height:30px;border-radius:8px;background:url('icon.svg') center/cover no-repeat;flex-shrink:0;}
   .brand-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:19px;letter-spacing:-0.01em;}
   .brand-tag{font-size:12px;color:var(--ink-faint);margin-top:-2px;}
 
@@ -128,7 +128,8 @@
   .topic-tag.review{background:var(--bad-soft);color:var(--bad);}
   .progress-label{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-faint);white-space:nowrap;}
 
-  .card{background:var(--surface);border-radius:var(--radius-lg);padding:30px 30px 26px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+  .card{background:var(--surface);border-radius:var(--radius-lg);padding:30px 30px 26px;box-shadow:var(--shadow);position:relative;overflow:hidden;animation:cardIn .2s ease both;}
+  @keyframes cardIn{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:none;}}
   .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
   .card.math::before{background:var(--math);}
   .card.sci::before{background:var(--sci);}
@@ -175,6 +176,15 @@
   .install-banner button{flex-shrink:0;}
   .install-banner .ib-close{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:18px;padding:0 4px;line-height:1;}
 
+  /* keyboard focus ring for accessibility */
+  .opt:focus-visible,.btn:focus-visible,.mode-btn:focus-visible,.next:focus-visible,.theme-toggle:focus-visible,.review-btn:focus-visible,.home-hint a:focus-visible{outline:2.5px solid var(--math);outline-offset:2px;}
+  kbd{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--surface-sunken);color:var(--ink-soft);border:1px solid var(--line);border-radius:5px;padding:1px 5px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .card{animation:none;}
+    *{transition:none !important;}
+  }
+
   @media (max-width: 430px){
     #app{padding:24px 16px calc(48px + env(safe-area-inset-bottom));}
     .topbar{margin-bottom:22px;}
@@ -183,6 +193,7 @@
     .stat-inner{gap:12px;}
     .card{padding:24px 22px 22px;}
     .qtext{font-size:18px;}
+    .kbd-tip{display:none;}   /* no physical keyboard on phones */
   }
 </style>
 </head>
@@ -257,6 +268,7 @@ let state = {
   hintShown: false,
   stepReveal: 0,
   selfMarked: false,
+  lastMarkRight: false,
   // persisted:
   scores: { math:{correct:0,attempted:0}, science:{correct:0,attempted:0} },
   wrong: {},          // { [questionId]: true } — questions to review
@@ -427,7 +439,8 @@ function renderHome(app){
     </div>
     ${reviewCount>0 ? `<button class="review-btn" id="start-review">↻ Review my mistakes · ${reviewCount} question${reviewCount>1?'s':''}</button>` : ''}
     <div class="home-hint">
-      Select a subject above (or leave on Mixed), then choose quiz or practice.<br>
+      Select a subject above (or leave on Mixed), then choose quiz or practice.
+      <span class="kbd-tip"><br>Tip: press <kbd>1</kbd>–<kbd>4</kbd> to answer, <kbd>→</kbd> for next.</span><br>
       <a id="reset-link">Reset all progress</a>
     </div>
   `;
@@ -650,6 +663,33 @@ function wireInstall(){
     try{ localStorage.setItem('sharpen.installDismissed','1'); }catch(e){}
   };
 }
+
+/* ---------- keyboard shortcuts ---------- */
+// Bound once. During a session: 1–4 answer a quiz, Enter/→ advance, Esc → dashboard.
+document.addEventListener('keydown', (e)=>{
+  if(e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+  if(!state.mode) return;
+  const q = currentQ();
+  if(!q){ // session-complete screen
+    if(e.key==='Enter'){ const b=document.getElementById('back-home'); if(b){ b.click(); e.preventDefault(); } }
+    return;
+  }
+  if(e.key==='Escape'){ state.mode=null; render(); return; }
+  // answer a quiz with number keys
+  if(q.type==='quiz' && !state.answered && /^[1-9]$/.test(e.key)){
+    const i = parseInt(e.key)-1;
+    if(i < q.opts.length){
+      const btn=document.querySelector('.opt[data-i="'+i+'"]');
+      if(btn){ btn.click(); e.preventDefault(); }
+    }
+    return;
+  }
+  // advance (don't hijack Enter when a button is focused — let it click that)
+  if((e.key==='ArrowRight') || (e.key==='Enter' && !(e.target && e.target.tagName==='BUTTON'))){
+    const nb=document.getElementById('next-btn');
+    if(nb && !nb.disabled){ nb.click(); e.preventDefault(); }
+  }
+});
 
 /* ---------- boot ---------- */
 load();
