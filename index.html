@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4F5F8">
+<title>Studio — MYP Study Dashboard</title>
+<script>try{var _t=localStorage.getItem('studio.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Studio">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F5F8;
+    --surface:#FFFFFF;
+    --surface-sunken:#EDEEF3;
+    --ink:#171B24;
+    --ink-soft:#666C7A;
+    --ink-faint:#9297A3;
+    --line:#E4E5EC;
+    --math:#5451E0;
+    --math-soft:#EDECFC;
+    --sci:#B5651D;
+    --sci-soft:#FBEDDD;
+    --good:#1F9D63;
+    --good-soft:#E4F6EC;
+    --bad:#D5473A;
+    --bad-soft:#FCEAE8;
+    --radius-lg:18px;
+    --radius-md:12px;
+    --shadow:0 1px 2px rgba(23,27,36,0.04), 0 8px 24px rgba(23,27,36,0.06);
+    --on-ink:#FFFFFF;
+    color-scheme:light;
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1014;
+    --surface:#171A21;
+    --surface-sunken:#20242E;
+    --ink:#F1F2F5;
+    --ink-soft:#A2A8B6;
+    --ink-faint:#6C7280;
+    --line:#2A2F3A;
+    --math:#908DFF;
+    --math-soft:#26263F;
+    --sci:#E3945C;
+    --sci-soft:#37281B;
+    --good:#4FCB90;
+    --good-soft:#183021;
+    --bad:#F0705F;
+    --bad-soft:#371D1A;
+    --on-ink:#0E1014;
+    --shadow:0 1px 2px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.45);
+    color-scheme:dark;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1014;
+      --surface:#171A21;
+      --surface-sunken:#20242E;
+      --ink:#F1F2F5;
+      --ink-soft:#A2A8B6;
+      --ink-faint:#6C7280;
+      --line:#2A2F3A;
+      --math:#908DFF;
+      --math-soft:#26263F;
+      --sci:#E3945C;
+      --sci-soft:#37281B;
+      --good:#4FCB90;
+      --good-soft:#183021;
+      --bad:#F0705F;
+      --bad-soft:#371D1A;
+      --on-ink:#0E1014;
+      --shadow:0 1px 2px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.45);
+      color-scheme:dark;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  #app{max-width:820px;margin:0 auto;padding:36px 28px calc(60px + env(safe-area-inset-bottom));}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:12px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--math),var(--sci));flex-shrink:0;}
+  .brand-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:19px;letter-spacing:-0.01em;}
+  .brand-tag{font-size:12px;color:var(--ink-faint);margin-top:-2px;}
+
+  .top-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .streak-chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;color:var(--ink);box-shadow:var(--shadow);white-space:nowrap;}
+  .streak-chip .flame{font-size:14px;}
+  .streak-chip.cold{color:var(--ink-faint);}
+  .theme-toggle{width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;font-size:15px;cursor:pointer;box-shadow:var(--shadow);line-height:1;padding:0;transition:transform .12s ease;}
+  .theme-toggle:hover{transform:translateY(-1px);}
+
+  .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+  .stat-card{background:var(--surface);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);cursor:pointer;border:1.5px solid transparent;transition:border-color .15s ease, transform .15s ease;}
+  .stat-card:hover{transform:translateY(-1px);}
+  .stat-card.active.math{border-color:var(--math);}
+  .stat-card.active.sci{border-color:var(--sci);}
+  .stat-inner{display:flex;align-items:center;gap:16px;}
+  .stat-text{flex:1;min-width:0;}
+  .stat-label{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;margin-bottom:3px;}
+  .stat-value{font-size:12.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+  .stat-value b{color:var(--ink);font-weight:600;}
+  .stat-sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;font-variant-numeric:tabular-nums;}
+
+  .mode-row{display:flex;gap:8px;background:var(--surface-sunken);padding:5px;border-radius:var(--radius-md);margin-bottom:8px;}
+  .mode-btn{flex:1;padding:10px 14px;border:none;border-radius:9px;background:transparent;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:500;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .mode-btn:hover{color:var(--ink);}
+  .mode-btn.emphasis{background:var(--ink);color:var(--on-ink);}
+
+  .review-btn{width:100%;margin-top:10px;padding:14px 16px;border:1.5px solid var(--bad);border-radius:var(--radius-md);background:var(--bad-soft);color:var(--bad);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:transform .12s ease;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .review-btn:hover{transform:translateY(-1px);}
+
+  .home-hint{font-size:13px;color:var(--ink-faint);text-align:center;margin-top:16px;line-height:1.5;}
+  .home-hint a{color:var(--ink-soft);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+
+  .qmeta{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;}
+  .topic-tag{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;padding:5px 10px;border-radius:7px;font-weight:500;}
+  .topic-tag.math{background:var(--math-soft);color:var(--math);}
+  .topic-tag.sci{background:var(--sci-soft);color:var(--sci);}
+  .topic-tag.review{background:var(--bad-soft);color:var(--bad);}
+  .progress-label{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-faint);white-space:nowrap;}
+
+  .card{background:var(--surface);border-radius:var(--radius-lg);padding:30px 30px 26px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+  .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+  .card.math::before{background:var(--math);}
+  .card.sci::before{background:var(--sci);}
+
+  .qtext{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:19px;line-height:1.5;margin:0 0 20px;letter-spacing:-0.01em;}
+
+  .options{display:flex;flex-direction:column;gap:9px;}
+  .opt{text-align:left;padding:13px 16px;border:1.5px solid var(--line);border-radius:var(--radius-md);background:var(--surface);font-family:'Inter',sans-serif;font-size:14.5px;font-weight:500;color:var(--ink);cursor:pointer;transition:all .12s ease;}
+  .opt:hover:not([disabled]){border-color:var(--ink-faint);background:var(--surface-sunken);}
+  .opt.correct{background:var(--good-soft);border-color:var(--good);color:var(--good);}
+  .opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);}
+  .opt[disabled]{cursor:default;}
+
+  .feedback{margin-top:16px;font-size:14px;line-height:1.65;padding:14px 16px;border-radius:var(--radius-md);background:var(--surface-sunken);color:var(--ink-soft);}
+
+  .steps{margin-top:16px;display:flex;flex-direction:column;gap:8px;}
+  .step{font-family:'JetBrains Mono',monospace;font-size:13.5px;padding:11px 14px;border-radius:var(--radius-md);background:var(--surface-sunken);color:var(--ink);line-height:1.5;}
+
+  .btn-row{display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;}
+  .btn{padding:10px 16px;border:1.5px solid var(--line);border-radius:var(--radius-md);background:var(--surface);font-size:13.5px;font-weight:500;cursor:pointer;color:var(--ink);transition:all .12s ease;font-family:'Inter',sans-serif;}
+  .btn:hover{border-color:var(--ink-faint);background:var(--surface-sunken);}
+  .btn.primary{background:var(--ink);color:var(--on-ink);border-color:var(--ink);}
+  .btn.good{background:var(--good-soft);border-color:var(--good);color:var(--good);}
+  .btn.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);}
+
+  .self-mark{margin-top:16px;}
+  .self-mark-label{font-size:13px;color:var(--ink-soft);margin-bottom:9px;}
+
+  .footer-nav{display:flex;justify-content:space-between;align-items:center;margin-top:20px;font-size:13px;}
+  .footer-nav .back{color:var(--ink-faint);cursor:pointer;}
+  .footer-nav .back:hover{color:var(--ink-soft);}
+  .footer-nav .next{cursor:pointer;font-weight:600;color:var(--ink);padding:9px 16px;border-radius:var(--radius-md);background:var(--surface);box-shadow:var(--shadow);border:none;font-family:'Inter',sans-serif;font-size:13px;}
+  .footer-nav .next:hover{transform:translateY(-1px);}
+  .footer-nav .next[disabled]{opacity:.5;cursor:default;transform:none;}
+
+  .empty-state{text-align:center;padding:40px 20px;}
+  .empty-state h2{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:20px;margin-bottom:8px;}
+  .empty-state p{color:var(--ink-soft);font-size:14px;margin-bottom:20px;line-height:1.55;}
+  .empty-state .score-big{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:34px;margin-bottom:4px;letter-spacing:-0.02em;}
+
+  .install-banner{display:none;align-items:center;gap:12px;background:var(--surface);border:1.5px solid var(--line);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .install-banner .ib-text{flex:1;font-size:13px;color:var(--ink-soft);line-height:1.4;}
+  .install-banner .ib-text b{color:var(--ink);}
+  .install-banner button{flex-shrink:0;}
+  .install-banner .ib-close{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:18px;padding:0 4px;line-height:1;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const bank = {
+  math: [
+    {id:'m1',type:'quiz',topic:'Fractions',q:'Simplify 18/24 to its simplest form.',opts:['9/12','3/4','6/8','2/3'],correct:1,explain:'Divide the top and bottom by their greatest common factor, 6: 18÷6=3, 24÷6=4, giving 3/4.'},
+    {id:'m2',type:'quiz',topic:'Decimals & fractions',q:'Which fraction is equivalent to 0.375?',opts:['1/3','3/8','5/12','3/4'],correct:1,explain:'0.375 = 375/1000, which simplifies to 3/8.'},
+    {id:'m3',type:'quiz',topic:'Percentages',q:'What is 25% of 160?',opts:['25','40','45','60'],correct:1,explain:'25% means one quarter. 160 ÷ 4 = 40.'},
+    {id:'m4',type:'practice',topic:'Algebra',q:'Solve for x: 2x + 5 = 17',hint:'Get x on its own — undo the +5 first, then undo the ×2.',steps:['2x + 5 = 17','Subtract 5 from both sides: 2x = 12','Divide both sides by 2: x = 6']},
+    {id:'m5',type:'quiz',topic:'Negative numbers',q:'-8 + 15 = ?',opts:['-23','-7','7','23'],correct:2,explain:'Adding a positive to a negative moves you up the number line: -8 + 15 = 7.'},
+    {id:'m6',type:'quiz',topic:'Negative numbers',q:'-3 × -4 = ?',opts:['-12','-7','7','12'],correct:3,explain:'A negative times a negative gives a positive: -3 × -4 = 12.'},
+    {id:'m7',type:'quiz',topic:'Ratio & proportion',q:'Simplify the ratio 15:20.',opts:['3:4','5:6','1:2','4:5'],correct:0,explain:'Divide both sides by 5: 15÷5=3, 20÷5=4, giving 3:4.'},
+    {id:'m8',type:'practice',topic:'Ratio & proportion',q:'A recipe serves 4 people using 300g of rice. How much rice is needed for 10 people?',hint:'Find the rice needed for 1 person first, then scale up.',steps:['300g ÷ 4 people = 75g per person','75g × 10 people = 750g','So 10 people need 750g of rice']},
+    {id:'m9',type:'practice',topic:'Algebra',q:'Solve for x: 3(x - 2) = 15',hint:'Start by expanding the brackets.',steps:['3(x - 2) = 15','Expand: 3x - 6 = 15','Add 6 to both sides: 3x = 21','Divide both sides by 3: x = 7']},
+    {id:'m10',type:'quiz',topic:'Geometry',q:'What is the area of a rectangle 8cm by 5cm?',opts:['13 cm²','26 cm²','40 cm²','45 cm²'],correct:2,explain:'Area of a rectangle = length × width = 8 × 5 = 40 cm².'},
+    {id:'m11',type:'quiz',topic:'Geometry',q:'What is the perimeter of a square with a 9cm side?',opts:['18cm','27cm','36cm','81cm'],correct:2,explain:'A square has 4 equal sides, so perimeter = 4 × 9 = 36cm.'},
+    {id:'m12',type:'practice',topic:'Geometry',q:'A triangle has angles of 55° and 65°. What is the third angle?',hint:'Remember: the angles inside any triangle always add up to the same total.',steps:['All angles in a triangle sum to 180°','55° + 65° = 120°','180° - 120° = 60°','The third angle is 60°']},
+    {id:'m13',type:'quiz',topic:'Order of operations',q:'Work out: 3 + 4 × 2',opts:['14','11','10','24'],correct:1,explain:'Multiplication comes before addition (BIDMAS): 4 × 2 = 8, then 3 + 8 = 11.'},
+    {id:'m14',type:'quiz',topic:'Order of operations',q:'Work out: (6 + 2) × 3²',opts:['24','72','48','30'],correct:1,explain:'Brackets first: 6 + 2 = 8. Indices next: 3² = 9. Then 8 × 9 = 72.'},
+    {id:'m15',type:'quiz',topic:'Powers & roots',q:'What is 5³?',opts:['15','25','125','243'],correct:2,explain:'5³ means 5 × 5 × 5 = 125.'},
+    {id:'m16',type:'quiz',topic:'Powers & roots',q:'What is √64?',opts:['6','7','8','32'],correct:2,explain:'The square root of 64 is the number that times itself gives 64: 8 × 8 = 64.'},
+    {id:'m17',type:'quiz',topic:'Number properties',q:'Which of these is a prime number?',opts:['21','27','29','33'],correct:2,explain:'A prime has exactly two factors: 1 and itself. 29 has no other factors; the others are all divisible by 3.'},
+    {id:'m18',type:'practice',topic:'Number properties',q:'List all the factors of 24.',hint:'Factors come in pairs that multiply to 24. Work through 1, 2, 3... and find each partner.',steps:['1 × 24','2 × 12','3 × 8','4 × 6','Factors of 24: 1, 2, 3, 4, 6, 8, 12, 24']},
+    {id:'m19',type:'quiz',topic:'Averages',q:'What is the mean of 4, 8, 6, 2?',opts:['4','5','6','20'],correct:1,explain:'Mean = total ÷ how many. 4 + 8 + 6 + 2 = 20, and 20 ÷ 4 = 5.'},
+    {id:'m20',type:'practice',topic:'Averages',q:'Find the median of 7, 3, 9, 5, 1.',hint:'The median is the middle value — but you have to order the numbers first.',steps:['Put them in order: 1, 3, 5, 7, 9','There are 5 values, so the middle one is the 3rd','The median is 5']},
+    {id:'m21',type:'quiz',topic:'Percentages',q:'A £40 jacket is reduced by 15%. What is the new price?',opts:['£25','£34','£36','£38'],correct:1,explain:'15% of 40 = 0.15 × 40 = £6 off. 40 − 6 = £34.'},
+    {id:'m22',type:'quiz',topic:'Probability',q:'A fair six-sided die is rolled. What is the probability of getting an even number?',opts:['1/6','1/3','1/2','2/3'],correct:2,explain:'The even numbers are 2, 4, 6 — that\'s 3 out of 6 outcomes, which simplifies to 1/2.'},
+    {id:'m23',type:'quiz',topic:'Coordinates',q:'In which quadrant does the point (-3, 4) lie?',opts:['1st','2nd','3rd','4th'],correct:1,explain:'x is negative and y is positive — that\'s the top-left, the 2nd quadrant.'},
+    {id:'m24',type:'practice',topic:'Algebra',q:'Solve for x: x/4 + 3 = 7',hint:'Undo the +3 first, then undo the ÷4.',steps:['x/4 + 3 = 7','Subtract 3 from both sides: x/4 = 4','Multiply both sides by 4: x = 16']}
+  ],
+  science: [
+    {id:'s1',type:'quiz',topic:'Cells',q:'What is the basic structural unit of all living things?',opts:['Tissue','Organ','Cell','Molecule'],correct:2,explain:'All living organisms are built from cells — the smallest unit that can carry out life processes.'},
+    {id:'s2',type:'quiz',topic:'Cells',q:'Which organelle is known as the "powerhouse of the cell"?',opts:['Nucleus','Mitochondria','Ribosome','Vacuole'],correct:1,explain:'Mitochondria release energy from food through respiration, powering the cell\'s activities.'},
+    {id:'s3',type:'quiz',topic:'States of matter',q:'Which state of matter has a fixed shape and a fixed volume?',opts:['Gas','Liquid','Solid','Plasma'],correct:2,explain:'Solids hold both a fixed shape and fixed volume because their particles are tightly packed and vibrate in place.'},
+    {id:'s4',type:'practice',topic:'Scientific method',q:'Put the scientific method steps in order: Experiment, Conclusion, Hypothesis, Question, Analyze data.',hint:'Start with what you want to find out, then predict, then test.',steps:['1. Question — what do you want to find out?','2. Hypothesis — make a testable prediction','3. Experiment — test the hypothesis with a fair test','4. Analyze data — look for patterns in your results','5. Conclusion — decide if the hypothesis was supported']},
+    {id:'s5',type:'quiz',topic:'Forces',q:'Which force pulls objects toward the centre of the Earth?',opts:['Friction','Magnetism','Gravity','Tension'],correct:2,explain:'Gravity is the force of attraction between Earth and any object with mass, pulling it downward.'},
+    {id:'s6',type:'quiz',topic:'Forces',q:'Newton\'s First Law of Motion describes the idea of...',opts:['Inertia','Acceleration','Momentum','Friction'],correct:0,explain:'Inertia is the tendency of an object to stay at rest or keep moving in a straight line unless a force acts on it — that\'s what the First Law describes.'},
+    {id:'s7',type:'practice',topic:'Scientific method',q:'You are testing whether more sunlight makes plants grow taller. Identify the independent, dependent, and control variables.',hint:'The independent variable is what YOU change on purpose.',steps:['Independent variable (what you change): amount of sunlight','Dependent variable (what you measure): plant height','Control variables (kept the same): water amount, soil type, pot size, plant species']},
+    {id:'s8',type:'quiz',topic:'Ecosystems',q:'Organisms that make their own food using sunlight are called...',opts:['Consumers','Decomposers','Producers','Predators'],correct:2,explain:'Producers, like plants, use photosynthesis to make their own food from sunlight, water, and carbon dioxide.'},
+    {id:'s9',type:'quiz',topic:'Ecosystems',q:'A group of the same species living in one area is called a...',opts:['Community','Population','Habitat','Biome'],correct:1,explain:'A population is all the members of one species living in the same area at the same time.'},
+    {id:'s10',type:'practice',topic:'Ecosystems',q:'Draw out (in words) the energy flow in this food chain: grass → rabbit → fox.',hint:'Think about where the energy in this chain originally comes from.',steps:['The Sun is the original energy source','Grass (producer) captures energy via photosynthesis','Rabbit (primary consumer) eats the grass','Fox (secondary consumer) eats the rabbit','Energy decreases at each step of the chain']},
+    {id:'s11',type:'quiz',topic:'Forces',q:'What unit is force measured in?',opts:['Joule','Newton','Watt','Pascal'],correct:1,explain:'Force is measured in newtons (N), named after Sir Isaac Newton.'},
+    {id:'s12',type:'quiz',topic:'States of matter',q:'The process of a liquid turning into a gas is called...',opts:['Condensation','Freezing','Evaporation','Sublimation'],correct:2,explain:'Evaporation happens when particles at a liquid\'s surface gain enough energy to become a gas.'},
+    {id:'s13',type:'quiz',topic:'Photosynthesis',q:'Which gas do plants take IN for photosynthesis?',opts:['Oxygen','Nitrogen','Carbon dioxide','Hydrogen'],correct:2,explain:'Plants absorb carbon dioxide and release oxygen. They use CO₂, water, and light to make glucose.'},
+    {id:'s14',type:'practice',topic:'Photosynthesis',q:'Write the word equation for photosynthesis.',hint:'Two raw materials go in, powered by light; a sugar and a gas come out.',steps:['Raw materials: carbon dioxide + water','Energy source: light (absorbed by chlorophyll)','carbon dioxide + water → glucose + oxygen','(light energy sits above the arrow)']},
+    {id:'s15',type:'quiz',topic:'Human body',q:'Which organ pumps blood around the body?',opts:['Lungs','Liver','Heart','Kidney'],correct:2,explain:'The heart is a muscular pump that pushes blood through blood vessels to every part of the body.'},
+    {id:'s16',type:'quiz',topic:'Human body',q:'Where does gas exchange (oxygen in, carbon dioxide out) happen in the lungs?',opts:['Trachea','Bronchi','Alveoli','Diaphragm'],correct:2,explain:'Alveoli are tiny air sacs with a huge surface area and thin walls, perfect for swapping gases with the blood.'},
+    {id:'s17',type:'quiz',topic:'Acids & bases',q:'A solution with a pH of 2 is...',opts:['Strongly acidic','Neutral','Weakly alkaline','Strongly alkaline'],correct:0,explain:'On the pH scale, low numbers are acidic. pH 2 is strongly acidic; pH 7 is neutral; high numbers are alkaline.'},
+    {id:'s18',type:'practice',topic:'Acids & bases',q:'What colour does universal indicator turn in a neutral solution, and what pH is that?',hint:'Neutral sits right in the middle of the pH scale.',steps:['The pH scale runs from 0 to 14','Neutral is exactly in the middle: pH 7','Pure water is neutral','Universal indicator turns green at pH 7']},
+    {id:'s19',type:'quiz',topic:'Energy',q:'A moving object has which type of energy?',opts:['Thermal','Kinetic','Chemical','Nuclear'],correct:1,explain:'Kinetic energy is the energy of movement. The faster or heavier an object, the more kinetic energy it has.'},
+    {id:'s20',type:'quiz',topic:'Energy',q:'Energy cannot be created or destroyed, only...',opts:['Increased','Transferred','Removed','Weighed'],correct:1,explain:'This is the law of conservation of energy: energy is transferred from one store to another, never made or lost.'},
+    {id:'s21',type:'quiz',topic:'Light & sound',q:'Which travels faster?',opts:['Sound','Light','They are equal','Neither moves'],correct:1,explain:'Light travels far faster than sound — that\'s why you see lightning before you hear thunder.'},
+    {id:'s22',type:'quiz',topic:'Periodic table',q:'What is the chemical symbol for Oxygen?',opts:['O','Ox','Og','Om'],correct:0,explain:'Oxygen\'s symbol is simply O. Symbols are one or two letters, with only the first capitalised.'},
+    {id:'s23',type:'quiz',topic:'Electricity',q:'In a series circuit, if one bulb breaks, the others will...',opts:['Get brighter','Stay the same','Go out','Flash'],correct:2,explain:'A series circuit is a single loop, so a break anywhere stops the current — all the bulbs go out.'},
+    {id:'s24',type:'practice',topic:'Cells',q:'Name three parts a plant cell has that an animal cell does NOT.',hint:'Think about what a plant needs that an animal doesn\'t — support, food-making, and storage.',steps:['Cell wall — gives the plant cell support and shape','Chloroplasts — contain chlorophyll to carry out photosynthesis','Large permanent vacuole — stores cell sap and keeps the cell firm','Animal cells have none of these three']}
+  ]
+};
+
+const STORE_KEY = 'studio.v1';
+
+let state = {
+  subject: null,
+  mode: null,
+  queue: [],
+  index: 0,
+  answered: false,
+  chosen: null,
+  hintShown: false,
+  stepReveal: 0,
+  selfMarked: false,
+  // persisted:
+  scores: { math:{correct:0,attempted:0}, science:{correct:0,attempted:0} },
+  wrong: {},          // { [questionId]: true } — questions to review
+  streak: { count:0, lastDay:null }
+};
+
+/* ---------- theme ---------- */
+function systemDark(){ return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+function effectiveTheme(){
+  const explicit = document.documentElement.getAttribute('data-theme');
+  if(explicit) return explicit;
+  return systemDark() ? 'dark' : 'light';
+}
+function applyThemeMeta(){
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', effectiveTheme()==='dark' ? '#0E1014' : '#F4F5F8');
+}
+function toggleTheme(){
+  const next = effectiveTheme()==='dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try{ localStorage.setItem('studio.theme', next); }catch(e){}
+  applyThemeMeta();
+  render();   // refresh the toggle icon
+}
+
+/* ---------- persistence ---------- */
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function dayDiff(a, b){
+  // whole days between YYYY-MM-DD strings a (earlier) and b (later)
+  const da = new Date(a+'T00:00:00'), db = new Date(b+'T00:00:00');
+  return Math.round((db - da) / 86400000);
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return;
+    const saved = JSON.parse(raw);
+    if(saved.scores) state.scores = saved.scores;
+    if(saved.wrong) state.wrong = saved.wrong;
+    if(saved.streak) state.streak = saved.streak;
+  }catch(e){ /* corrupt or blocked storage — start fresh */ }
+}
+function save(){
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      scores: state.scores, wrong: state.wrong, streak: state.streak
+    }));
+  }catch(e){ /* storage full or blocked — app still works this session */ }
+}
+function touchStreak(){
+  const t = todayKey();
+  const s = state.streak;
+  if(s.lastDay === t) return;           // already counted today
+  if(s.lastDay && dayDiff(s.lastDay, t) === 1) s.count += 1;  // consecutive day
+  else s.count = 1;                      // first ever, or a gap → restart at 1
+  s.lastDay = t;
+}
+function recordResult(subj, qid, wasCorrect){
+  state.scores[subj].attempted++;
+  if(wasCorrect){
+    state.scores[subj].correct++;
+    if(state.wrong[qid]) delete state.wrong[qid];   // mastered — clear from review
+  } else {
+    state.wrong[qid] = true;                         // add to review set
+  }
+  touchStreak();
+  save();
+}
+function wrongList(){
+  const all = bank.math.concat(bank.science);
+  return all.filter(q => state.wrong[q.id]);
+}
+
+/* ---------- helpers ---------- */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function pct(subj){
+  const s = state.scores[subj];
+  if(s.attempted===0) return 0;
+  return s.correct/s.attempted;
+}
+function subjectOf(q){ return bank.math.includes(q) ? 'math' : 'science'; }
+
+function ring(p, color){
+  const r = 20, c = 2*Math.PI*r;
+  const offset = c - p*c;
+  return `<svg width="52" height="52" viewBox="0 0 52 52" style="flex-shrink:0;transform:rotate(-90deg)">
+    <circle cx="26" cy="26" r="${r}" fill="none" stroke="var(--surface-sunken)" stroke-width="5"/>
+    <circle cx="26" cy="26" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round"
+      stroke-dasharray="${c}" stroke-dashoffset="${offset}"/>
+  </svg>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+  const app = document.getElementById('app');
+  if(!state.mode){
+    renderHome(app);
+  } else {
+    renderQuestion(app);
+  }
+}
+
+function renderHome(app){
+  const mpct = pct('math'), spct = pct('science');
+  const reviewCount = wrongList().length;
+  const streakActive = state.streak.lastDay === todayKey();
+  const streakLabel = state.streak.count > 0
+    ? `${state.streak.count}-day streak`
+    : 'Start a streak';
+
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div>
+          <div class="brand-name">Studio</div>
+          <div class="brand-tag">MYP Grade 7 · Math &amp; Science</div>
+        </div>
+      </div>
+      <div class="top-right">
+        <div class="streak-chip ${streakActive?'':'cold'}">
+          <span class="flame">${streakActive?'🔥':'❄️'}</span>${streakLabel}
+        </div>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">${effectiveTheme()==='dark'?'☀️':'🌙'}</button>
+      </div>
+    </div>
+    <div id="install-banner" class="install-banner">
+      <div class="ib-text"><b>Install Studio</b> — add it to your home screen to study offline, like a real app.</div>
+      <button class="btn primary" id="install-btn">Install</button>
+      <button class="ib-close" id="install-dismiss" aria-label="Dismiss">×</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card ${state.subject==='math'?'active math':''}" id="pick-math">
+        <div class="stat-inner">
+          ${ring(mpct,'var(--math)')}
+          <div class="stat-text">
+            <div class="stat-label">Math</div>
+            <div class="stat-value"><b>${state.scores.math.correct}</b>/${state.scores.math.attempted} correct</div>
+            <div class="stat-sub">${Math.round(mpct*100)}% accuracy</div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card ${state.subject==='science'?'active sci':''}" id="pick-science">
+        <div class="stat-inner">
+          ${ring(spct,'var(--sci)')}
+          <div class="stat-text">
+            <div class="stat-label">Science</div>
+            <div class="stat-value"><b>${state.scores.science.correct}</b>/${state.scores.science.attempted} correct</div>
+            <div class="stat-sub">${Math.round(spct*100)}% accuracy</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mode-row">
+      <button class="mode-btn ${!state.subject?'emphasis':''}" id="pick-mixed">Mixed</button>
+      <button class="mode-btn" id="start-quiz">Quiz mode</button>
+      <button class="mode-btn" id="start-practice">Practice mode</button>
+    </div>
+    ${reviewCount>0 ? `<button class="review-btn" id="start-review">↻ Review my mistakes · ${reviewCount} question${reviewCount>1?'s':''}</button>` : ''}
+    <div class="home-hint">
+      Select a subject above (or leave on Mixed), then choose quiz or practice.<br>
+      <a id="reset-link">Reset all progress</a>
+    </div>
+  `;
+  document.getElementById('pick-math').onclick = ()=>{ state.subject = state.subject==='math' ? null : 'math'; render(); };
+  document.getElementById('pick-science').onclick = ()=>{ state.subject = state.subject==='science' ? null : 'science'; render(); };
+  document.getElementById('pick-mixed').onclick = ()=>{ state.subject = null; render(); };
+  document.getElementById('start-quiz').onclick = ()=> startSession('quiz');
+  document.getElementById('start-practice').onclick = ()=> startSession('practice');
+  document.getElementById('theme-toggle').onclick = toggleTheme;
+  const rev = document.getElementById('start-review');
+  if(rev) rev.onclick = ()=> startReview();
+  document.getElementById('reset-link').onclick = ()=>{
+    if(confirm('Reset all scores, streak, and saved mistakes? This cannot be undone.')){
+      state.scores = { math:{correct:0,attempted:0}, science:{correct:0,attempted:0} };
+      state.wrong = {};
+      state.streak = { count:0, lastDay:null };
+      save();
+      render();
+    }
+  };
+  wireInstall();
+}
+
+function startSession(mode){
+  let pool = [];
+  if(state.subject==='math') pool = bank.math;
+  else if(state.subject==='science') pool = bank.science;
+  else pool = bank.math.concat(bank.science);
+  pool = pool.filter(q=>q.type===mode);
+  beginQueue(shuffle(pool), mode);
+}
+function startReview(){
+  const pool = wrongList();
+  if(pool.length===0) return;
+  beginQueue(shuffle(pool), 'review');
+}
+function beginQueue(queue, mode){
+  state.queue = queue;
+  state.mode = mode;
+  state.index = 0;
+  state.answered = false;
+  state.chosen = null;
+  state.hintShown = false;
+  state.stepReveal = 0;
+  state.selfMarked = false;
+  render();
+}
+
+function currentQ(){ return state.queue[state.index]; }
+
+function renderQuestion(app){
+  const q = currentQ();
+  if(!q){ renderSessionEnd(app); return; }
+
+  const subj = subjectOf(q);
+  const tagClass = subj==='math' ? 'math' : 'sci';
+  const isReview = state.mode==='review';
+  const modeTag = isReview ? 'review' : tagClass;
+  const modeLabel = state.mode==='quiz' ? 'Quiz mode' : state.mode==='review' ? 'Review mode' : 'Practice mode';
+
+  let inner = `<div class="qtext">${q.q}</div>`;
+
+  if(q.type==='quiz'){
+    inner += `<div class="options">` + q.opts.map((o,i)=>{
+      let cls = 'opt';
+      if(state.answered){
+        if(i===q.correct) cls += ' correct';
+        else if(i===state.chosen) cls += ' wrong';
+      }
+      return `<button class="${cls}" data-i="${i}" ${state.answered?'disabled':''}>${o}</button>`;
+    }).join('') + `</div>`;
+    if(state.answered){
+      inner += `<div class="feedback">${q.explain}</div>`;
+    }
+  } else {
+    inner += `<div class="btn-row">
+        <button class="btn" id="show-hint">Show hint</button>
+        <button class="btn" id="show-step">Reveal next step</button>
+      </div>`;
+    if(state.hintShown){
+      inner += `<div class="feedback">${q.hint}</div>`;
+    }
+    if(state.stepReveal>0){
+      inner += `<div class="steps">` + q.steps.slice(0,state.stepReveal).map(s=>`<div class="step">${s}</div>`).join('') + `</div>`;
+    }
+    // once all steps are shown, ask the student to mark themselves honestly
+    if(state.stepReveal>=q.steps.length && !state.selfMarked){
+      inner += `<div class="self-mark">
+          <div class="self-mark-label">Did you get it right on your own?</div>
+          <div class="btn-row">
+            <button class="btn good" id="mark-right">✓ I got it</button>
+            <button class="btn bad" id="mark-wrong">✕ Need more practice</button>
+          </div>
+        </div>`;
+    }
+    if(state.selfMarked){
+      inner += `<div class="feedback">${state.lastMarkRight ? 'Nice — logged as mastered.' : 'No worries — saved to your review list so you can come back to it.'}</div>`;
+    }
+  }
+
+  const nextEnabled = q.type==='quiz' ? state.answered : state.selfMarked;
+
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div>
+          <div class="brand-name">Studio</div>
+          <div class="brand-tag">${modeLabel}</div>
+        </div>
+      </div>
+    </div>
+    <div class="qmeta">
+      <span class="topic-tag ${modeTag}">${subj} · ${q.topic}</span>
+      <span class="progress-label">${String(state.index+1).padStart(2,'0')} / ${String(state.queue.length).padStart(2,'0')}</span>
+    </div>
+    <div class="card ${tagClass}">${inner}</div>
+    <div class="footer-nav">
+      <span class="back" id="back-home-link">← Dashboard</span>
+      <button class="next" id="next-btn" ${nextEnabled?'':'disabled'}>${state.index+1 < state.queue.length ? 'Next question →' : 'Finish session →'}</button>
+    </div>
+  `;
+
+  document.getElementById('back-home-link').onclick = ()=>{ state.mode=null; render(); };
+  document.getElementById('next-btn').onclick = ()=>{
+    if(!nextEnabled) return;
+    state.index++;
+    state.answered = false;
+    state.chosen = null;
+    state.hintShown = false;
+    state.stepReveal = 0;
+    state.selfMarked = false;
+    render();
+  };
+
+  if(q.type==='quiz'){
+    if(!state.answered){
+      document.querySelectorAll('.opt').forEach(btn=>{
+        btn.onclick = ()=>{
+          if(state.answered) return;
+          const i = parseInt(btn.dataset.i);
+          state.answered = true;
+          state.chosen = i;
+          recordResult(subj, q.id, i===q.correct);
+          render();   // re-render: colours the options + shows explanation + enables Next
+        };
+      });
+    }
+  } else {
+    const hintBtn = document.getElementById('show-hint');
+    if(hintBtn) hintBtn.onclick = ()=>{ state.hintShown = true; render(); };
+    const stepBtn = document.getElementById('show-step');
+    if(stepBtn) stepBtn.onclick = ()=>{
+      if(state.stepReveal < q.steps.length){ state.stepReveal++; render(); }
+    };
+    const right = document.getElementById('mark-right');
+    if(right) right.onclick = ()=>{
+      state.selfMarked = true; state.lastMarkRight = true;
+      recordResult(subj, q.id, true);
+      render();
+    };
+    const wrong = document.getElementById('mark-wrong');
+    if(wrong) wrong.onclick = ()=>{
+      state.selfMarked = true; state.lastMarkRight = false;
+      recordResult(subj, q.id, false);
+      render();
+    };
+  }
+}
+
+function renderSessionEnd(app){
+  const done = state.queue.length;
+  const isReview = state.mode==='review';
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div>
+          <div class="brand-name">Studio</div>
+          <div class="brand-tag">Session complete</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="border-left:none;">
+      <div class="empty-state">
+        <div class="score-big">${done} done</div>
+        <h2>${isReview ? 'Mistakes reviewed' : 'Nice work'}</h2>
+        <p>${isReview
+          ? 'Anything you got right just now cleared out of your review list. What\'s left still needs another pass.'
+          : 'Your progress and streak are saved. Come back tomorrow to keep the streak alive.'}</p>
+        <button class="btn primary" id="back-home">Back to dashboard</button>
+      </div>
+    </div>`;
+  document.getElementById('back-home').onclick = ()=>{ state.mode=null; render(); };
+}
+
+/* ---------- PWA install prompt ---------- */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  const b = document.getElementById('install-banner');
+  if(b && localStorage.getItem('studio.installDismissed')!=='1') b.style.display='flex';
+});
+function wireInstall(){
+  const banner = document.getElementById('install-banner');
+  if(!banner) return;
+  if(deferredPrompt && localStorage.getItem('studio.installDismissed')!=='1') banner.style.display='flex';
+  const btn = document.getElementById('install-btn');
+  if(btn) btn.onclick = async ()=>{
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    banner.style.display='none';
+  };
+  const dismiss = document.getElementById('install-dismiss');
+  if(dismiss) dismiss.onclick = ()=>{
+    banner.style.display='none';
+    try{ localStorage.setItem('studio.installDismissed','1'); }catch(e){}
+  };
+}
+
+/* ---------- boot ---------- */
+load();
+applyThemeMeta();
+render();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
