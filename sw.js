@@ -1,5 +1,5 @@
 // Studio service worker — offline-first for a tiny static app.
-const CACHE = 'studio-v2';
+const CACHE = 'studio-v3';
 const ASSETS = [
   './',
   './index.html',

@@ -172,6 +172,16 @@
   .install-banner .ib-text b{color:var(--ink);}
   .install-banner button{flex-shrink:0;}
   .install-banner .ib-close{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:18px;padding:0 4px;line-height:1;}
+
+  @media (max-width: 430px){
+    #app{padding:24px 16px calc(48px + env(safe-area-inset-bottom));}
+    .topbar{margin-bottom:22px;}
+    .brand-tag{display:none;}          /* declutter the topbar on phones */
+    .stat-card{padding:16px;}
+    .stat-inner{gap:12px;}
+    .card{padding:24px 22px 22px;}
+    .qtext{font-size:18px;}
+  }
 </style>
 </head>
 <body>
