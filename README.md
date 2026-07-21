@@ -1,9 +1,9 @@
-# Studio — MYP Study Dashboard
+# Sharpen — MYP Study Dashboard
 
 A local-first study app for MYP Grade 7 **Math & Science**. Quiz yourself, work through
 step-by-step practice problems, and drill the questions you got wrong.
 
-**Live:** https://olyhelpschoreo.github.io/studio
+**Live:** https://olyhelpschoreo.github.io/sharpen
 
 ## Features
 - **Quiz mode** — multiple choice with instant feedback and explanations

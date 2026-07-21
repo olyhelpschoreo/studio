@@ -1,6 +1,6 @@
 {
-  "name": "Studio — MYP Study Dashboard",
-  "short_name": "Studio",
+  "name": "Sharpen — MYP Study Dashboard",
+  "short_name": "Sharpen",
   "description": "Grade 7 Math & Science practice, quizzes, and mistake review. Saves offline.",
   "start_url": ".",
   "scope": ".",
