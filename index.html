@@ -618,10 +618,10 @@ function renderQuestion(app){
     if(state.stepReveal>0){
       inner += `<div class="steps">` + q.steps.slice(0,state.stepReveal).map(s=>`<div class="step">${s}</div>`).join('') + `</div>`;
     }
-    // once all steps are shown, ask the student to mark themselves honestly
-    if(state.stepReveal>=q.steps.length && !state.selfMarked){
+    // self-mark is always available — work it out in your head, use hint/steps only if stuck
+    if(!state.selfMarked){
       inner += `<div class="self-mark">
-          <div class="self-mark-label">Did you get it right on your own?</div>
+          <div class="self-mark-label">Work out the answer, then mark yourself honestly:</div>
           <div class="btn-row">
             <button class="btn good" id="mark-right">✓ I got it</button>
             <button class="btn bad" id="mark-wrong">✕ Need more practice</button>
