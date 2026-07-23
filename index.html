@@ -129,6 +129,11 @@
   .lb-dot.sci{background:var(--sci);}
   .lb-topic{flex:1;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .lb-time{font-family:'JetBrains Mono',monospace;font-size:14.5px;font-variant-numeric:tabular-nums;color:var(--ink);flex-shrink:0;font-weight:500;}
+  .lb-row.tappable{cursor:pointer;transition:transform .12s ease, border-color .12s ease;}
+  .lb-row.tappable:hover{transform:translateY(-1px);border-color:var(--ink-faint);}
+  .topic-meta{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink-faint);flex-shrink:0;}
+  .section-label{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;margin:18px 0 4px;}
+  .section-label:first-child{margin-top:0;}
 
   .home-hint{font-size:13px;color:var(--ink-faint);text-align:center;margin-top:16px;line-height:1.5;}
   .home-hint a{color:var(--ink-soft);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
@@ -494,6 +499,8 @@ function render(){
   const app = document.getElementById('app');
   if(state.mode === 'leaderboard'){
     renderLeaderboard(app);
+  } else if(state.mode === 'topics'){
+    renderTopics(app);
   } else if(!state.mode){
     renderHome(app);
   } else {
@@ -558,6 +565,7 @@ function renderHome(app){
       <button class="mode-btn" id="start-practice">Practice mode</button>
     </div>
     ${reviewCount>0 ? `<button class="review-btn" id="start-review">↻ Review my mistakes · ${reviewCount} question${reviewCount>1?'s':''}</button>` : ''}
+    <button class="best-btn" id="drill-topic">📚 Practice one topic</button>
     <button class="best-btn" id="best-times">🏆 Best times per topic${Object.keys(state.bestTimes).length ? ` · ${Object.keys(state.bestTimes).length}` : ''}</button>
     <div class="home-hint">
       Select a subject above (or leave on Mixed), then choose quiz or practice.
@@ -574,6 +582,7 @@ function renderHome(app){
   const rev = document.getElementById('start-review');
   if(rev) rev.onclick = ()=> startReview();
   document.getElementById('best-times').onclick = ()=>{ state.mode = 'leaderboard'; render(); };
+  document.getElementById('drill-topic').onclick = ()=>{ state.mode = 'topics'; render(); };
   document.getElementById('reset-link').onclick = ()=>{
     if(confirm('Reset all scores, streak, saved mistakes, and best times? This cannot be undone.')){
       state.scores = { math:{correct:0,attempted:0}, science:{correct:0,attempted:0} };
@@ -603,7 +612,7 @@ function renderLeaderboard(app){
       </div>`;
   } else {
     body = `<div class="lb-list">` + entries.map((e,i)=>`
-        <div class="lb-row">
+        <div class="lb-row tappable" title="Practice this topic">
           <span class="lb-rank">${i<3 ? medals[i] : '#'+(i+1)}</span>
           <span class="lb-dot ${e.subj==='math'?'math':'sci'}"></span>
           <span class="lb-topic">${e.topic}</span>
@@ -611,7 +620,7 @@ function renderLeaderboard(app){
         </div>`).join('') + `</div>
       <div class="footer-nav" style="margin-top:20px;">
         <span class="back" id="lb-back">← Dashboard</span>
-        <span class="progress-label">${entries.length} topic${entries.length>1?'s':''}</span>
+        <span class="progress-label">tap a topic to beat it</span>
       </div>`;
   }
 
@@ -628,6 +637,61 @@ function renderLeaderboard(app){
     ${entries.length ? body : `<div class="card" style="border-left:none;">${body}</div>`}
   `;
   document.getElementById('lb-back').onclick = ()=>{ state.mode = null; render(); };
+  app.querySelectorAll('.lb-row.tappable').forEach(row=>{
+    row.onclick = ()=> startTopic(row.querySelector('.lb-topic').textContent);
+  });
+}
+
+function topicCounts(){
+  const out = { math:{}, science:{} };
+  bank.math.forEach(q=>{ out.math[q.topic] = (out.math[q.topic]||0)+1; });
+  bank.science.forEach(q=>{ out.science[q.topic] = (out.science[q.topic]||0)+1; });
+  return out;
+}
+
+function renderTopics(app){
+  const counts = topicCounts();
+  const section = (subj, label, dotClass)=>{
+    const topics = Object.keys(counts[subj]).sort();
+    if(!topics.length) return '';
+    return `<div class="section-label">${label}</div>` + topics.map(topic=>{
+      const best = state.bestTimes[topic];
+      return `<div class="lb-row tappable" title="Practice ${topic}">
+          <span class="lb-dot ${dotClass}"></span>
+          <span class="lb-topic">${topic}</span>
+          <span class="topic-meta">${best ? best.t.toFixed(1)+'s · ' : ''}${counts[subj][topic]} Q</span>
+        </div>`;
+    }).join('');
+  };
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div>
+          <div class="brand-name">Sharpen</div>
+          <div class="brand-tag">📚 Practice one topic</div>
+        </div>
+      </div>
+    </div>
+    <div class="lb-list">
+      ${section('math','Math','math')}
+      ${section('science','Science','sci')}
+    </div>
+    <div class="footer-nav" style="margin-top:20px;">
+      <span class="back" id="tp-back">← Dashboard</span>
+      <span class="progress-label">tap a topic to drill it</span>
+    </div>
+  `;
+  document.getElementById('tp-back').onclick = ()=>{ state.mode = null; render(); };
+  app.querySelectorAll('.lb-row.tappable').forEach(row=>{
+    row.onclick = ()=> startTopic(row.querySelector('.lb-topic').textContent);
+  });
+}
+
+function startTopic(topic){
+  const pool = bank.math.concat(bank.science).filter(q=>q.topic===topic);
+  if(!pool.length) return;
+  beginQueue(shuffle(pool), 'topic');
 }
 
 function startSession(mode){
@@ -682,7 +746,7 @@ function renderQuestion(app){
   const tagClass = subj==='math' ? 'math' : 'sci';
   const isReview = state.mode==='review';
   const modeTag = isReview ? 'review' : tagClass;
-  const modeLabel = state.mode==='quiz' ? 'Quiz mode' : state.mode==='review' ? 'Review mode' : 'Practice mode';
+  const modeLabel = state.mode==='quiz' ? 'Quiz mode' : state.mode==='review' ? 'Review mode' : state.mode==='topic' ? `Topic: ${q.topic}` : 'Practice mode';
 
   let inner = `<div class="qtext">${q.q}</div>`;
 

@@ -1,5 +1,5 @@
 // Sharpen service worker — offline-first for a tiny static app.
-const CACHE = 'sharpen-v10';
+const CACHE = 'sharpen-v11';
 const ASSETS = [
   './',
   './index.html',
