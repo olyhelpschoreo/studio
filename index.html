@@ -118,6 +118,18 @@
   .review-btn{width:100%;margin-top:10px;padding:14px 16px;border:1.5px solid var(--bad);border-radius:var(--radius-md);background:var(--bad-soft);color:var(--bad);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:transform .12s ease;display:flex;align-items:center;justify-content:center;gap:8px;}
   .review-btn:hover{transform:translateY(-1px);}
 
+  .best-btn{width:100%;margin-top:10px;padding:14px 16px;border:1.5px solid var(--line);border-radius:var(--radius-md);background:var(--surface);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:transform .12s ease;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--shadow);}
+  .best-btn:hover{transform:translateY(-1px);}
+
+  .lb-list{display:flex;flex-direction:column;gap:8px;}
+  .lb-row{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--surface);border:1.5px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow);}
+  .lb-rank{font-family:'JetBrains Mono',monospace;font-size:15px;width:30px;text-align:center;color:var(--ink-faint);flex-shrink:0;}
+  .lb-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .lb-dot.math{background:var(--math);}
+  .lb-dot.sci{background:var(--sci);}
+  .lb-topic{flex:1;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lb-time{font-family:'JetBrains Mono',monospace;font-size:14.5px;font-variant-numeric:tabular-nums;color:var(--ink);flex-shrink:0;font-weight:500;}
+
   .home-hint{font-size:13px;color:var(--ink-faint);text-align:center;margin-top:16px;line-height:1.5;}
   .home-hint a{color:var(--ink-soft);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
 
@@ -365,7 +377,8 @@ let state = {
   // persisted:
   scores: { math:{correct:0,attempted:0}, science:{correct:0,attempted:0} },
   wrong: {},          // { [questionId]: true } — questions to review
-  streak: { count:0, lastDay:null }
+  streak: { count:0, lastDay:null },
+  bestTimes: {}       // { [topic]: { t:seconds, subj:'math'|'science' } } — fastest correct answer
 };
 
 /* ---------- theme ---------- */
@@ -405,12 +418,13 @@ function load(){
     if(saved.scores) state.scores = saved.scores;
     if(saved.wrong) state.wrong = saved.wrong;
     if(saved.streak) state.streak = saved.streak;
+    if(saved.bestTimes) state.bestTimes = saved.bestTimes;
   }catch(e){ /* corrupt or blocked storage — start fresh */ }
 }
 function save(){
   try{
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      scores: state.scores, wrong: state.wrong, streak: state.streak
+      scores: state.scores, wrong: state.wrong, streak: state.streak, bestTimes: state.bestTimes
     }));
   }catch(e){ /* storage full or blocked — app still works this session */ }
 }
@@ -432,6 +446,14 @@ function recordResult(subj, qid, wasCorrect){
   }
   touchStreak();
   save();
+}
+function recordBest(topic, subj, secs){
+  // only correct answers set a best time; keep the fastest per topic
+  const prev = state.bestTimes[topic];
+  if(!prev || secs < prev.t){
+    state.bestTimes[topic] = { t: secs, subj: subj };
+    save();
+  }
 }
 function wrongList(){
   const all = bank.math.concat(bank.science);
@@ -470,7 +492,9 @@ function fmtTime(ms){ return (ms/1000).toFixed(1) + 's'; }
 function render(){
   clearInterval(state.timerId);   // stop any live timer; renderQuestion restarts it if needed
   const app = document.getElementById('app');
-  if(!state.mode){
+  if(state.mode === 'leaderboard'){
+    renderLeaderboard(app);
+  } else if(!state.mode){
     renderHome(app);
   } else {
     renderQuestion(app);
@@ -534,6 +558,7 @@ function renderHome(app){
       <button class="mode-btn" id="start-practice">Practice mode</button>
     </div>
     ${reviewCount>0 ? `<button class="review-btn" id="start-review">↻ Review my mistakes · ${reviewCount} question${reviewCount>1?'s':''}</button>` : ''}
+    <button class="best-btn" id="best-times">🏆 Best times per topic${Object.keys(state.bestTimes).length ? ` · ${Object.keys(state.bestTimes).length}` : ''}</button>
     <div class="home-hint">
       Select a subject above (or leave on Mixed), then choose quiz or practice.
       <span class="kbd-tip"><br>Tip: press <kbd>1</kbd>–<kbd>4</kbd> to answer, <kbd>→</kbd> for next.</span><br>
@@ -548,16 +573,61 @@ function renderHome(app){
   document.getElementById('theme-toggle').onclick = toggleTheme;
   const rev = document.getElementById('start-review');
   if(rev) rev.onclick = ()=> startReview();
+  document.getElementById('best-times').onclick = ()=>{ state.mode = 'leaderboard'; render(); };
   document.getElementById('reset-link').onclick = ()=>{
-    if(confirm('Reset all scores, streak, and saved mistakes? This cannot be undone.')){
+    if(confirm('Reset all scores, streak, saved mistakes, and best times? This cannot be undone.')){
       state.scores = { math:{correct:0,attempted:0}, science:{correct:0,attempted:0} };
       state.wrong = {};
       state.streak = { count:0, lastDay:null };
+      state.bestTimes = {};
       save();
       render();
     }
   };
   wireInstall();
+}
+
+function renderLeaderboard(app){
+  // entries sorted fastest-first
+  const entries = Object.keys(state.bestTimes)
+    .map(topic => ({ topic, t: state.bestTimes[topic].t, subj: state.bestTimes[topic].subj }))
+    .sort((a,b) => a.t - b.t);
+  const medals = ['🥇','🥈','🥉'];
+
+  let body;
+  if(entries.length === 0){
+    body = `<div class="empty-state">
+        <h2>No times yet</h2>
+        <p>Answer questions correctly and your fastest time for each topic shows up here. Race yourself!</p>
+        <button class="btn primary" id="lb-back">Back to dashboard</button>
+      </div>`;
+  } else {
+    body = `<div class="lb-list">` + entries.map((e,i)=>`
+        <div class="lb-row">
+          <span class="lb-rank">${i<3 ? medals[i] : '#'+(i+1)}</span>
+          <span class="lb-dot ${e.subj==='math'?'math':'sci'}"></span>
+          <span class="lb-topic">${e.topic}</span>
+          <span class="lb-time">${e.t.toFixed(1)}s</span>
+        </div>`).join('') + `</div>
+      <div class="footer-nav" style="margin-top:20px;">
+        <span class="back" id="lb-back">← Dashboard</span>
+        <span class="progress-label">${entries.length} topic${entries.length>1?'s':''}</span>
+      </div>`;
+  }
+
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div>
+          <div class="brand-name">Sharpen</div>
+          <div class="brand-tag">🏆 Best times per topic</div>
+        </div>
+      </div>
+    </div>
+    ${entries.length ? body : `<div class="card" style="border-left:none;">${body}</div>`}
+  `;
+  document.getElementById('lb-back').onclick = ()=>{ state.mode = null; render(); };
 }
 
 function startSession(mode){
@@ -701,6 +771,7 @@ function renderQuestion(app){
           state.answered = true;
           state.chosen = i;
           stopTimer();
+          if(i===q.correct) recordBest(q.topic, subj, state.qElapsed/1000);
           recordResult(subj, q.id, i===q.correct);
           render();   // re-render: colours the options + shows explanation + enables Next
         };
@@ -717,6 +788,7 @@ function renderQuestion(app){
     if(right) right.onclick = ()=>{
       state.selfMarked = true; state.lastMarkRight = true;
       stopTimer();
+      recordBest(q.topic, subj, state.qElapsed/1000);
       recordResult(subj, q.id, true);
       render();
     };
